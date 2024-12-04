@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Interaction</title>
+    <style>
+        /* General styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Title page styles */
+        #titlePage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #333; /* Dark background */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            text-align: center;
+            z-index: 10; /* Keep above the 3D canvas */
+            opacity: 1;
+            transition: opacity 1s ease-out;
+        }
+
+        /* Hidden state for title page */
+        #titlePage.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Title page -->
+    <div id="titlePage">Camera 324E</div>
+
+    <!-- Tooltip for hover interaction -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <!-- Three.js Scene -->
+    <script src="js/three.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/OBJLoader.js"></script>
+    <script>
+        let texloader = new THREE.TextureLoader();
+        let objloader = new THREE.OBJLoader();
+        let camera, controls, renderer;
+        let scene, sunglasses;
+        let raycaster, mouse, selectedObject = null, hoveredObject = null;
+        let cameraParts = [];
+        let tooltip = document.getElementById("tooltip");
+        let titlePage = document.getElementById("titlePage");
+
+        function setup() {
+            // Initialize scene, camera, and renderer
+            scene = new THREE.Scene();
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            controls = new THREE.OrbitControls(camera);
+            camera.position.set(0, 1, 5);
+            controls.enableKeys = true;
+            controls.update();
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setClearColor(0xffffff, 1); // Sets background color to white
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            renderer.shadowMap.enabled = false;
+
+            // Add lighting
+            let directionallight = new THREE.DirectionalLight(0xbbddee, 0.8);
+            directionallight.position.set(1, 0, 1);
+            directionallight.target.y = 1;
+            scene.add(directionallight);
+
+            let pointLight = new THREE.PointLight(0xaa22ee, 1);
+            pointLight.position.set(-10, 5, 0);
+            scene.add(pointLight);
+
+            // Initialize raycasting
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Load the movie camera model
+            sunglasses = new THREE.Group();
+            loadMesh('movieCam.obj', sunglasses);
+
+            // Position the sunglasses (camera model)
+            sunglasses.scale.set(1, 1, 1);
+            sunglasses.position.set(0, 0, -0.5);
+            scene.add(sunglasses);
+
+            // Set up event listeners
+            window.addEventListener('mousemove', onMouseMove, false);
+            window.addEventListener('click', onMouseClick, false);
+            setupScrollReveal();
+        }
+
+        function draw() {
+            requestAnimationFrame(draw);
+            sunglasses.rotation.y += 0.001;  // Rotate the model
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function loadMesh(str, parent) {
+            objloader.load(str, function (obj) {
+                obj.traverse(function (child) {
+                    if (child.isMesh) {
+                        cameraParts.push(child); // Store each mesh for interaction
+                        child.material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa }); // Default material
+                        child.userData = { // Add custom data for tooltips
+                            name: child.name || "Unknown Part",
+                            description: `${child.name || "Unknown"}`
+                        };
+                    }
+                });
+                parent.add(obj);
+            }, function (xhr) {
+                console.log((xhr.loaded / xhr.total * 100) + "% loaded");
+            }, function (err) {
+                console.error("Error on load");
+            });
+        }
+
+        function onMouseMove(event) {
+            // Normalize mouse coordinates for raycasting
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Update the raycaster with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+
+            // Check for intersections
+            let intersects = raycaster.intersectObjects(cameraParts);
+
+            if (intersects.length > 0) {
+                if (hoveredObject && hoveredObject !== intersects[0].object && hoveredObject !== selectedObject) {
+                    hoveredObject.material.color.set(0xaaaaaa); // Reset previous hover color
+                }
+
+                hoveredObject = intersects[0].object;
+
+                if (hoveredObject !== selectedObject) {
+                    hoveredObject.material.color.set(0x00ff00); // Highlight on hover
+                }
+
+                let tooltipText = hoveredObject.userData.description || "No information available";
+                showTooltip(event.clientX, event.clientY, tooltipText);
+            } else {
+                if (hoveredObject && hoveredObject !== selectedObject) {
+                    hoveredObject.material.color.set(0xaaaaaa); // Reset color if no longer hovered
+                }
+                hoveredObject = null;
+                hideTooltip();
+            }
+        }
+
+        function onMouseClick(event) {
+            let intersects = raycaster.intersectObjects(cameraParts);
+
+            if (intersects.length > 0) {
+                if (selectedObject && selectedObject !== intersects[0].object) {
+                    selectedObject.material.color.set(0xaaaaaa); // Reset previous selection color
+                }
+
+                selectedObject = intersects[0].object;
+                selectedObject.material.color.set(0xff0000); // Highlight selected object
+            }
+        }
+
+        function showTooltip(x, y, text) {
+            tooltip.style.display = "block";
+            tooltip.style.left = `${x + 10}px`;
+            tooltip.style.top = `${y + 10}px`;
+            tooltip.innerHTML = text;
+        }
+
+        function hideTooltip() {
+            tooltip.style.display = "none";
+        }
+
+        function setupScrollReveal() {
+            window.addEventListener('scroll', () => {
+                let scrollY = window.scrollY;
+                if (scrollY > 50) { // Adjust the threshold as needed
+                    titlePage.classList.add('hidden'); // Hide the title page
+                }
+            });
+        }
+
+        setup();
+        draw();
+    </script>
+</body>
+</html>
