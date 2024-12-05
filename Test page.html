@@ -133,8 +133,7 @@
 
                 // Animate the clicked part outward
                 gsap.to(clickedPart.position, {
-                    z: clickedPart.position.z + 0.5 * animationDirection, // Adjust Z position
-                    y: clickedPart.position.y + 0.3 * animationDirection, // Adjust Y position
+                    y: clickedPart.position.y + 0.4 * animationDirection, // Adjust Y position
                     duration: 0.5, // Animation duration
                     onComplete: () => {
                         console.log('Animation complete for clicked part:', clickedPart.name || 'Unnamed Part');
