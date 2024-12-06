@@ -104,6 +104,8 @@
 
         
         let animationDirection = 1; // 1 for moving outward, -1 for moving inward
+        selectedPart = null; // To track the currently selected mesh
+        const originalPositions = new Map(); // Store original positions of meshes
 
         function onMouseClick(event) {
             // Calculate mouse position in normalized device coordinates
@@ -119,31 +121,48 @@
             if (intersects.length > 0) {
                 const clickedPart = intersects[0].object;
 
-                // If another part is selected and it's not the clicked part, animate it back
-                if (selectedPart && selectedPart !== clickedPart) {
-                    gsap.to(selectedPart.position, {
-                        z: 0, // Reset Z position
-                        y: 0, // Reset Y position
-                        duration: 0.5, // Smooth animation
-                        onComplete: () => {
-                            console.log('Previous part reset:', selectedPart.name || 'Unnamed Part');
-                        }
-                    });
+                // Save the original position if not already saved
+                if (!originalPositions.has(clickedPart)) {
+                    originalPositions.set(clickedPart, { x: clickedPart.position.x, y: clickedPart.position.y, z: clickedPart.position.z });
                 }
 
-                // Animate the clicked part outward
-                gsap.to(clickedPart.position, {
-                    z: clickedPart.position.z + 0.5 * animationDirection, // Adjust Z position
-                    y: clickedPart.position.y + 0.3 * animationDirection, // Adjust Y position
-                    duration: 0.5, // Animation duration
-                    onComplete: () => {
-                        console.log('Animation complete for clicked part:', clickedPart.name || 'Unnamed Part');
-                        animationDirection *= -1; // Toggle direction for next click
-                    }
-                });
+                // If another part is selected and it's not the clicked part, animate it back first
+                if (selectedPart && selectedPart !== clickedPart) {
+                    const original = originalPositions.get(selectedPart);
 
-                // Update the selected part
-                selectedPart = clickedPart;
+                    // Reset the previously selected part, then move the clicked part
+                    gsap.to(selectedPart.position, {
+                        x: original.x, // Reset X position
+                        y: original.y, // Reset Y position
+                        z: original.z, // Reset Z position
+                        duration: 0.5, // Smooth animation
+                        onComplete: () => {
+                            // Animate the clicked part outward
+                            gsap.to(clickedPart.position, {
+                                y: originalPositions.get(clickedPart).y + 0.4 * animationDirection, // Adjust Y position
+                                duration: 1.5, // Animation duration
+                                onComplete: () => {
+                                   animationDirection *= 1; // Toggle direction for next click
+                                }
+                            });
+
+                            // Update the selected part after animation
+                            selectedPart = clickedPart;
+                        }
+                    });
+                } else {
+                    // If no previous part, animate the clicked part directly
+                    gsap.to(clickedPart.position, {
+                        y: originalPositions.get(clickedPart).y + 0.4 * animationDirection, // Adjust Y position
+                        duration: 1.5, // Animation duration
+                        onComplete: () => {
+                            animationDirection *= 1; // Toggle direction for next click
+                        }
+                    });
+
+                    // Update the selected part
+                    selectedPart = clickedPart;
+                }
 
                 // Display information about the clicked part
                 const infoBox = document.getElementById('infoBox');
@@ -153,6 +172,7 @@
                 console.log('No part was clicked.');
             }
         }
+
 
 
 
