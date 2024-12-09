@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive 3D Model</title>
     <style>
+        
         body, html {
             margin: 0;
             padding: 0;
@@ -106,7 +107,7 @@
         let animationDirection = 1; // 1 for moving outward, -1 for moving inward
         selectedPart = null; // To track the currently selected mesh
         const originalPositions = new Map(); // Store original positions of meshes
-
+        const clickSound = new Audio('sounds/mouse-click-117076.mp3');
         function onMouseClick(event) {
             // Calculate mouse position in normalized device coordinates
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -125,6 +126,11 @@
                 if (!originalPositions.has(clickedPart)) {
                     originalPositions.set(clickedPart, { x: clickedPart.position.x, y: clickedPart.position.y, z: clickedPart.position.z });
                 }
+                clickSound.currentTime = 0; // Reset playback position in case it's still playing
+                clickSound.play().catch(error => {
+                    console.error('Error playing sound:', error);
+                });
+
 
                 // If another part is selected and it's not the clicked part, animate it back first
                 if (selectedPart && selectedPart !== clickedPart) {

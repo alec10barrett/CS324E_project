@@ -178,8 +178,9 @@
                 hideTooltip();
             }
         }
-
+        
         function onMouseClick(event) {
+            let clickSound = new Audio('sounds/click.mp3');
             let intersects = raycaster.intersectObjects(cameraParts);
 
             if (intersects.length > 0) {
@@ -189,6 +190,10 @@
 
                 selectedObject = intersects[0].object;
                 selectedObject.material.color.set(0xff0000); // Highlight selected object
+
+                clickSound.play().catch((error) => {
+                console.error("Sound playback failed:", error);
+            });
             }
         }
 
