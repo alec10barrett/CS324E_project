@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive 3D Model</title>
     <style>
-        
         body, html {
             margin: 0;
             padding: 0;
@@ -17,182 +16,306 @@
         #infoBox {
             position: absolute;
             top: 200px;
-            left: 250px;
+            left: 200px;
             background-color: rgba(39, 140, 208, 0.8);
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0px 0px 10px rgba(200, 14, 207, 0.674);
             display: none; /* Hidden by default */
         }
+
+        .top-right-links {
+            position: absolute;
+            top: 25px;
+            right: 10px;
+            display: flex;
+            gap: 50px; /* Increased gap for more spacing between links */
+        }
+
+        .top-right-links a {
+            text-decoration: none;
+            font-family: 'Roboto', sans-serif;
+            color: #ff7300;
+            font-weight: lighter;
+            position: relative; /* For positioning the hover box */
+            padding: 5px 10px; /* Padding for a larger clickable area */
+            border-radius: 8px; /* Rounded corners for links */
+            transition: background-color 0.3s, color 0.3s; /* Smooth hover effect */
+        }
+
+        .top-right-links a:hover {
+            text-decoration: none; /* Remove underline on hover */
+            background-color: rgba(255, 115, 0, 0.2); /* Light background on hover */
+            color: #ffffff; /* Change text color on hover */
+        }
+
     </style>
 </head>
 <body>
+    <div class="top-right-links">
+        <a href="#" target="_blank">Features</a>
+        <a href="#" target="_blank">Experience It</a>
+        <a href="#" target="_blank">Buy Now</a>
+    </div>
+
     <div id="infoBox"></div>
+
     <script src="three.js"></script>
     <script src="OrbitControls.js"></script>
     <script src="OBJLoader.js"></script>
     <script src="gsap-public/minified/gsap.min.js"></script>
     <script>
         let camera, controls, renderer, scene, sunglasses, raycaster, mouse, selectedPart;
-
+        const targetPosition = { x: 0, y: 0.4, z: 0 };
+        const originalPositions = new Map();
+    
+        // Map to store text box elements for each part
+        const textBoxes = new Map();
+    
+        let canvas, ctx;
+                    
+        let theta = 0; // Horizontal rotation angle
+        let phi = Math.PI / 2; // Vertical rotation angle (to keep camera above/below object)
+        const radius = 1.65; // Distance from the object
+        const rotationSpeed = 0.02; // Speed of rotation
+    
         function init() {
-            // Create the scene
             scene = new THREE.Scene();
-
-            // Setup camera
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
-
-            // Add lighting
-            const ambientLight = new THREE.AmbientLight(0x404040, 1.5); // Soft light
+    
+            // Add canvas for drawing lines
+            canvas = document.createElement("canvas");
+            canvas.style.position = "absolute";
+            canvas.style.top = "0";
+            canvas.style.left = "0";
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.style.pointerEvents = "none"; // Prevent interference with mouse events
+            document.body.appendChild(canvas);
+            ctx = canvas.getContext("2d");
+    
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
             scene.add(ambientLight);
+    
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
             directionalLight.position.set(10, 10, 10);
             scene.add(directionalLight);
-
-            // OrbitControls to enable user interaction
+    
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableZoom = false; // Disable zoom
-            controls.enablePan = false; // Disable panning
 
-            // Raycaster for detecting clicks on the model
+            // Enable rotation and disable zoom and pan
+            controls.enableZoom = false; // Disable zoom
+            controls.enablePan = false;  // Disable panning
+
+            const moveSpeed = 0.1; // Adjust speed for smoother movement
+            const rotationSpeed = 0.02;
+
+            const keyState = {}; // Track pressed keys
+
+            function onKeyDown(event) {
+                keyState[event.key.toLowerCase()] = true; // Track pressed keys
+            }
+
+            function onKeyUp(event) {
+                keyState[event.key.toLowerCase()] = false; // Track released keys
+            }
+
+            window.addEventListener("keydown", onKeyDown, false);
+            window.addEventListener("keyup", onKeyUp, false);
+
+            camera.position.set(0, 0, radius);
+            camera.lookAt(0, 0, 0); // Point the camera at the object
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            controls.update();
+
+            animateCamera();
+
+            // Variables for camera movement
+
+            function animateCamera() {
+                requestAnimationFrame(animateCamera);
+
+                            // Update angles based on key states for smooth rotation
+                if (keyState["a"] || keyState["arrowleft"]) {
+                    theta += rotationSpeed; // Rotate left
+                }
+                if (keyState["d"] || keyState["arrowright"]) {
+                    theta -= rotationSpeed; // Rotate right
+                }
+                if (keyState["w"] || keyState["arrowup"]) {
+                    phi = Math.max(0.1, phi - rotationSpeed); // Rotate up (limit to avoid flipping)
+                }
+                if (keyState["s"] || keyState["arrowdown"]) {
+                    phi = Math.min(Math.PI - 0.1, phi + rotationSpeed); // Rotate down (limit to avoid flipping)
+                }
+
+                // Calculate new camera position
+                const x = radius * Math.sin(phi) * Math.cos(theta);
+                const y = radius * Math.cos(phi);
+                const z = radius * Math.sin(phi) * Math.sin(theta);
+
+                camera.position.set(x, y, z);
+                camera.lookAt(0, 0, 0); // Keep the camera looking at the object
+
+                controls.target.set(0, 0, 0); // Update OrbitControls target
+                controls.update();
+
+                renderer.render(scene, camera);
+}
+
+            window.addEventListener("keydown", onKeyDown);
+            window.addEventListener("keyup", onKeyUp);
+
+
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
-
-            // Load the OBJ model
+    
             const objLoader = new THREE.OBJLoader();
             objLoader.load('movieCam.obj', (obj) => {
                 sunglasses = obj;
-
-                // Compute bounding box to center the model
                 const boundingBox = new THREE.Box3().setFromObject(sunglasses);
                 const center = boundingBox.getCenter(new THREE.Vector3());
                 const size = boundingBox.getSize(new THREE.Vector3());
-
-                // Center the object at the origin
+    
                 sunglasses.position.sub(center);
-
-                // Add the object to the scene
                 scene.add(sunglasses);
-
-                // Adjust the camera to fit the object
+    
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const fitDistance = maxDim / (2 * Math.tan((Math.PI / 180) * camera.fov / 2));
-                camera.position.set(center.x + 0.6, center.y + 0.2, fitDistance * 1.4);
+                camera.position.set(center.x, center.y, fitDistance * 1.4);
                 camera.lookAt(center);
-
+    
                 controls.target.set(center.x, center.y, center.z);
                 controls.update();
+    
+                // Store original positions and create text boxes for all parts
+                sunglasses.traverse((child) => {
+                    if (child.isMesh) {
+                        originalPositions.set(child, {
+                            x: child.position.x,
+                            y: child.position.y,
+                            z: child.position.z,
+                        });
+    
+                        // Create a text box for each part
+                        const div = document.createElement("div");
+                        div.className = "text-box";
+                        div.style.position = "absolute";
+                        div.style.backgroundColor = "rgba(255, 255, 255, 0.8)";
+                        div.style.padding = "5px";
+                        div.style.border = "1px solid black";
+                        div.style.display = "none"; // Hidden initially
+                        div.textContent = `Part: ${child.name || "Unnamed Part"}`;
+                        document.body.appendChild(div);
+                        textBoxes.set(child, div);
+                    }
+                });
             });
-
-            // Add event listener for clicks
-            window.addEventListener('click', onMouseClick, false);
-
-            // Adjust rendering on window resize
-            window.addEventListener('resize', onWindowResize, false);
-
-            // Render the scene
+    
+            window.addEventListener("click", onMouseClick, false);
+            window.addEventListener("resize", onWindowResize, false);
+    
             animate();
         }
-
+    
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-
-        
-        let animationDirection = 1; // 1 for moving outward, -1 for moving inward
-        selectedPart = null; // To track the currently selected mesh
-        const originalPositions = new Map(); // Store original positions of meshes
-        const clickSound = new Audio('sounds/mouse-click-117076.mp3');
+    
         function onMouseClick(event) {
-            // Calculate mouse position in normalized device coordinates
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            // Update the raycaster with the camera and mouse position
             raycaster.setFromCamera(mouse, camera);
-
-            // Check for intersections with the model
+    
             const intersects = raycaster.intersectObject(sunglasses, true);
-
+    
             if (intersects.length > 0) {
                 const clickedPart = intersects[0].object;
-
-                // Save the original position if not already saved
-                if (!originalPositions.has(clickedPart)) {
-                    originalPositions.set(clickedPart, { x: clickedPart.position.x, y: clickedPart.position.y, z: clickedPart.position.z });
-                }
-                clickSound.currentTime = 0; // Reset playback position in case it's still playing
-                clickSound.play().catch(error => {
-                    console.error('Error playing sound:', error);
-                });
-
-
-                // If another part is selected and it's not the clicked part, animate it back first
+    
                 if (selectedPart && selectedPart !== clickedPart) {
                     const original = originalPositions.get(selectedPart);
-
-                    // Reset the previously selected part, then move the clicked part
                     gsap.to(selectedPart.position, {
-                        x: original.x, // Reset X position
-                        y: original.y, // Reset Y position
-                        z: original.z, // Reset Z position
-                        duration: 0.5, // Smooth animation
-                        onComplete: () => {
-                            // Animate the clicked part outward
-                            gsap.to(clickedPart.position, {
-                                y: originalPositions.get(clickedPart).y + 0.4 * animationDirection, // Adjust Y position
-                                duration: 1.5, // Animation duration
-                                onComplete: () => {
-                                   animationDirection *= 1; // Toggle direction for next click
-                                }
-                            });
-
-                            // Update the selected part after animation
-                            selectedPart = clickedPart;
-                        }
+                        x: original.x,
+                        y: original.y,
+                        z: original.z,
+                        duration: 1.5,
                     });
-                } else {
-                    // If no previous part, animate the clicked part directly
-                    gsap.to(clickedPart.position, {
-                        y: originalPositions.get(clickedPart).y + 0.4 * animationDirection, // Adjust Y position
-                        duration: 1.5, // Animation duration
-                        onComplete: () => {
-                            animationDirection *= 1; // Toggle direction for next click
-                        }
-                    });
-
-                    // Update the selected part
-                    selectedPart = clickedPart;
+    
+                    // Hide the text box of the previously selected part
+                    const prevTextBox = textBoxes.get(selectedPart);
+                    if (prevTextBox) prevTextBox.style.display = "none";
                 }
-
-                // Display information about the clicked part
-                const infoBox = document.getElementById('infoBox');
-                infoBox.style.display = 'block';
-                infoBox.innerHTML = `Part: ${clickedPart.name || 'Unnamed Part'}`;
+    
+                selectedPart = clickedPart;
+    
+                // Move the clicked part to the target position
+                gsap.to(clickedPart.position, {
+                    x: targetPosition.x,
+                    y: targetPosition.y,
+                    z: targetPosition.z,
+                    duration: 1.5,
+                });
+    
+                // Show the text box for the clicked part
+                const textBox = textBoxes.get(clickedPart);
+                if (textBox) {
+                    textBox.style.display = "block";
+                }
             } else {
-                console.log('No part was clicked.');
+                console.log("No part was clicked.");
             }
         }
-
-
-
-
+    
+        function updateTextBoxPositions() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+    
+            textBoxes.forEach((textBox, mesh) => {
+                const vector = mesh.position.clone();
+                vector.project(camera);
+    
+                const x = (vector.x * 0.5 + 0.65) * window.innerWidth;
+                const y = (-vector.y * 0.5 + 0.6) * window.innerHeight;
+    
+                textBox.style.left = `${x}px`;
+                textBox.style.top = `${y}px`;
+    
+                if (selectedPart === mesh) {
+                    textBox.style.display = "block";
+    
+                    // Draw line from the mesh to the text box
+                    const rect = textBox.getBoundingClientRect();
+                    const textBoxX = rect.left + rect.width / 2;
+                    const textBoxY = rect.top;
+    
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(textBoxX, textBoxY);
+                    ctx.strokeStyle = "black";
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else {
+                    textBox.style.display = "none";
+                }
+            });
+        }
+    
         function animate() {
             requestAnimationFrame(animate);
-
-            // Update controls
+            updateTextBoxPositions(); // Update text box positions and draw lines
             controls.update();
-
             renderer.render(scene, camera);
         }
-
+    
         init();
-    </script>
+    </script>     
 </body>
 </html>
-
