@@ -10,7 +10,7 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
-            font-family: Georgia, sans-serif;
+            font-family: Arial, sans-serif;
         }
 
         #infoBox {
@@ -26,76 +26,112 @@
             font-size: 48px;
             font-family: 'Georgia', serif;
         }
+
+        .top-right-links {
+            position: absolute;
+            top: 25px;
+            right: 10px;
+            display: flex;
+            gap: 50px;
+        }
+
+        .top-right-links a {
+            text-decoration: none;
+            font-family: 'Georgia', sans-serif;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 18pt;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .top-right-links a:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: #ffffff;
+        }
+
+        .text-box {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 5px;
+            border: 1px solid black;
+            font-family: 'Georgia';
+            font-size: 18pt;
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <div class="top-right-links">
+        <a href="#" target="_blank">Features</a>
+        <a href="#" target="_blank">Experience It</a>
+        <a href="#" target="_blank">Buy Now</a>
+    </div>
+
     <div id="infoBox"></div>
+
     <script src="three.js"></script>
     <script src="OrbitControls.js"></script>
     <script src="OBJLoader.js"></script>
     <script src="gsap-public/minified/gsap.min.js"></script>
     <script>
         let camera, controls, renderer, scene, sunglasses, raycaster, mouse, selectedPart;
-        let originalPositions = new Map();
+        const targetPosition = { x: 0, y: 0.4, z: 0 };
+        const originalPositions = new Map();
+        const textBoxes = new Map();
 
         function init() {
             scene = new THREE.Scene();
-
-            // Setup camera
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Add lighting
             const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
             scene.add(ambientLight);
+
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
             directionalLight.position.set(10, 10, 10);
             scene.add(directionalLight);
 
-            // OrbitControls for user interaction
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableZoom = false; // disable zoom
-            controls.enablePan = false; // Disable panning
+            controls.enableZoom = false;
+            controls.enablePan = false;
 
-            // Raycaster for detecting clicks on the model
+            camera.position.set(0, 0, 1.65);
+            camera.lookAt(0, 0, 0);
+            controls.update();
+
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
 
-            // Load the OBJ model
             const objLoader = new THREE.OBJLoader();
             objLoader.load('movieCam.obj', (obj) => {
                 sunglasses = obj;
-
-                // Compute bounding box to center the model
                 const boundingBox = new THREE.Box3().setFromObject(sunglasses);
                 const center = boundingBox.getCenter(new THREE.Vector3());
                 const size = boundingBox.getSize(new THREE.Vector3());
 
-                // Center the object at the origin
                 sunglasses.position.sub(center);
-
-                // Add the object to the scene
                 scene.add(sunglasses);
 
-                // Adjust the camera to fit the object
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const fitDistance = maxDim / (2 * Math.tan((Math.PI / 180) * camera.fov / 2));
-                camera.position.set(center.x + 0.6, center.y + 0.2, fitDistance * 1.4);
-                camera.lookAt(center);
+                sunglasses.traverse((child) => {
+                    if (child.isMesh) {
+                        originalPositions.set(child, { ...child.position });
+                        const div = document.createElement("div");
+                        div.className = "text-box";
+                        div.textContent = `Part: ${child.name || "Unnamed Part"}`;
+                        document.body.appendChild(div);
+                        textBoxes.set(child, div);
+                    }
+                });
 
                 controls.target.set(center.x, center.y, center.z);
                 controls.update();
             });
 
-            // Add event listener for clicks
-            window.addEventListener('click', onMouseClick, false);
-
-            // Adjust rendering on window resize
-            window.addEventListener('resize', onWindowResize, false);
-
-            // Render the scene
+            window.addEventListener("click", onMouseClick, false);
+            window.addEventListener("resize", onWindowResize, false);
             animate();
         }
 
@@ -173,7 +209,7 @@
                 selectedPart = null;
             }
         }
-
+        
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
