@@ -5,24 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive 3D Model</title>
     <style>
-        
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
             overflow: hidden;
-            font-family: Arial, sans-serif;
+            font-family: Georgia, sans-serif;
         }
 
         #infoBox {
             position: absolute;
             top: 200px;
             left: 250px;
-            background-color: rgba(39, 140, 208, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0px 0px 10px rgba(200, 14, 207, 0.674);
-            display: none; /* Hidden by default */
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            max-width: 250px;
+            font-size: 48px;
+            font-family: 'Georgia', serif;
         }
     </style>
 </head>
@@ -34,9 +36,9 @@
     <script src="gsap-public/minified/gsap.min.js"></script>
     <script>
         let camera, controls, renderer, scene, sunglasses, raycaster, mouse, selectedPart;
+        let originalPositions = new Map();
 
         function init() {
-            // Create the scene
             scene = new THREE.Scene();
 
             // Setup camera
@@ -46,15 +48,15 @@
             document.body.appendChild(renderer.domElement);
 
             // Add lighting
-            const ambientLight = new THREE.AmbientLight(0x404040, 1.5); // Soft light
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
             scene.add(ambientLight);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
             directionalLight.position.set(10, 10, 10);
             scene.add(directionalLight);
 
-            // OrbitControls to enable user interaction
+            // OrbitControls for user interaction
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableZoom = false; // Disable zoom
+            controls.enableZoom = false; // disable zoom
             controls.enablePan = false; // Disable panning
 
             // Raycaster for detecting clicks on the model
@@ -103,11 +105,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        
-        let animationDirection = 1; // 1 for moving outward, -1 for moving inward
-        selectedPart = null; // To track the currently selected mesh
-        const originalPositions = new Map(); // Store original positions of meshes
-        const clickSound = new Audio('sounds/mouse-click-117076.mp3');
         function onMouseClick(event) {
             // Calculate mouse position in normalized device coordinates
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -117,77 +114,69 @@
             raycaster.setFromCamera(mouse, camera);
 
             // Check for intersections with the model
+            if (!sunglasses) return; // Ensure the model is loaded before proceeding
             const intersects = raycaster.intersectObject(sunglasses, true);
+
+            // Get reference to the infoBox
+            const infoBox = document.getElementById('infoBox');
 
             if (intersects.length > 0) {
                 const clickedPart = intersects[0].object;
 
+                // If the clicked part is the currently selected part, reset it
+                if (selectedPart === clickedPart) {
+                    resetSelectedPart();
+                    infoBox.style.display = 'none';
+                    return;
+                }
+
                 // Save the original position if not already saved
                 if (!originalPositions.has(clickedPart)) {
-                    originalPositions.set(clickedPart, { x: clickedPart.position.x, y: clickedPart.position.y, z: clickedPart.position.z });
+                    originalPositions.set(clickedPart, clickedPart.position.clone());
                 }
-                clickSound.currentTime = 0; // Reset playback position in case it's still playing
-                clickSound.play().catch(error => {
-                    console.error('Error playing sound:', error);
+
+                // If another part is selected and it's not the clicked part, reset the current selected part
+                if (selectedPart && selectedPart !== clickedPart) {
+                    resetSelectedPart();
+                }
+
+                // Move the clicked part
+                gsap.to(clickedPart.position, {
+                    y: originalPositions.get(clickedPart).y + 0.4,
+                    duration: 1.0
                 });
 
-
-                // If another part is selected and it's not the clicked part, animate it back first
-                if (selectedPart && selectedPart !== clickedPart) {
-                    const original = originalPositions.get(selectedPart);
-
-                    // Reset the previously selected part, then move the clicked part
-                    gsap.to(selectedPart.position, {
-                        x: original.x, // Reset X position
-                        y: original.y, // Reset Y position
-                        z: original.z, // Reset Z position
-                        duration: 0.5, // Smooth animation
-                        onComplete: () => {
-                            // Animate the clicked part outward
-                            gsap.to(clickedPart.position, {
-                                y: originalPositions.get(clickedPart).y + 0.4 * animationDirection, // Adjust Y position
-                                duration: 1.5, // Animation duration
-                                onComplete: () => {
-                                   animationDirection *= 1; // Toggle direction for next click
-                                }
-                            });
-
-                            // Update the selected part after animation
-                            selectedPart = clickedPart;
-                        }
-                    });
-                } else {
-                    // If no previous part, animate the clicked part directly
-                    gsap.to(clickedPart.position, {
-                        y: originalPositions.get(clickedPart).y + 0.4 * animationDirection, // Adjust Y position
-                        duration: 1.5, // Animation duration
-                        onComplete: () => {
-                            animationDirection *= 1; // Toggle direction for next click
-                        }
-                    });
-
-                    // Update the selected part
-                    selectedPart = clickedPart;
-                }
-
-                // Display information about the clicked part
-                const infoBox = document.getElementById('infoBox');
+                // Display the part info
+                let formattedName = clickedPart.name || 'Unnamed Part';
+                formattedName = formattedName.replace(/_/g, ' ').replace(/mesh/gi, '').trim();
                 infoBox.style.display = 'block';
-                infoBox.innerHTML = `Part: ${clickedPart.name || 'Unnamed Part'}`;
+                infoBox.innerHTML = `<a href="#" id="infoLink" style="color: #fff; text-decoration: underline;">${formattedName}</a>`;
+
+                selectedPart = clickedPart;
             } else {
-                console.log('No part was clicked.');
+                // Clicked outside the model, reset the currently selected part
+                resetSelectedPart();
+                infoBox.style.display = 'none';
             }
         }
 
 
-
+        function resetSelectedPart() {
+            if (selectedPart && originalPositions.has(selectedPart)) {
+                const original = originalPositions.get(selectedPart);
+                gsap.to(selectedPart.position, {
+                    x: original.x,
+                    y: original.y,
+                    z: original.z,
+                    duration: 1.0
+                });
+                selectedPart = null;
+            }
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-
-            // Update controls
             controls.update();
-
             renderer.render(scene, camera);
         }
 
@@ -195,4 +184,3 @@
     </script>
 </body>
 </html>
-
