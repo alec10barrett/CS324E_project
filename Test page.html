@@ -9,323 +9,283 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Inter', sans-serif;
-            display: flex;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
-        /* White Menu Box at the Top */
-        #menuBox {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #874F41;
-            padding: 10px 5px;
-            z-index: 1000; /* Ensures it's above other content */
-            display: flex;
-            justify-content: flex-end; /* Aligns links to the right */
-        }
-
-        #menuBox a {
-            text-decoration: none;
-            color: #FBE9D0;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0 15px;
-            padding: 8px 15px;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-
-        #menuBox a:hover {
-            color: #244855;
-            text-decoration: underline;
-        }
-
-        #menuTitle {
-            font-size: 40px;
-            font-weight: bold;
-            margin: 10px;
-            color: #ffffff; /* Adjust color as needed */
+        #infoBox {
             position: absolute;
-            top: 0;
-            left: 10%;
+            top: 100px;
+            left: 100px;
+            background-color: none;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            max-width: 250px;
+            font-size: 48px;
+            font-family: 'Georgia', serif;
         }
 
-        #infoPanel {
-            position: fixed;
-            top: 05%; /* Keep the panel below the menu */
-            left: 0;
-            width: 250px; /* Fixed width for the panel */
-            height: 100%; /* Full height */
-            background-color: #FBE9D0;
-            padding: 20px;
-            font-family: 'Inter', sans-serif;
-            font-size: 16px;
-            color: #ffffff;
-            overflow-y: auto;
-            z-index: 10;
-            display: block;
-        }
-
-        #infoPanel h3 {
-            font-size: 32px;
-            color: #244855;
-            margin-bottom: 15px;
-        }
-
-        #infoPanel p {
-            font-size: 18px;
-            color: #244855;
-            line-height: 1.6;
-        }
-
-        #infoPanel a {
-            color: #000000;
-            text-decoration: none;
-        }
-
-        /* Content Area (Model) */
-        #canvas-container {
-            flex-grow: 1; /* Takes the remaining space */
+        .top-right-links {
+            position: absolute;
+            top: 25px;
+            right: 10px;
             display: flex;
-            justify-content: flex-start; /* Aligns the 3D model to the left */
-            align-items: center; /* Centers the 3D model vertically */
+            gap: 50px;
         }
+
+        .top-right-links a {
+            text-decoration: none;
+            font-family: 'Georgia', sans-serif;
+            color: #ffffff;
+            font-size: 18pt;
+            position: relative;
+            padding: 5px 10px;
+            border: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .top-right-links a:hover {
+            text-decoration: none;
+            background-color: rgba(255, 115, 0, 0.2);
+            color: #ffffff;
+        }
+
+        .text-box {
+            position: absolute;
+            background-color: rgba(39, 140, 208, 0.8);
+            padding: 10px;
+            box-shadow: 0px 0px 10px rgba(200, 14, 207, 0.674);
+            font-family: 'Georgia';
+            font-size: 18pt;
+            display: none;
+        }
+
     </style>
 </head>
 <body>
-    <!-- White Menu Box at the Top with Links -->
-    <div id="menuBox">
-        <h2 id="menuTitle">Film Cam 324</h2>
+    <div class="top-right-links">
         <a href="#" target="_blank">Features</a>
         <a href="#" target="_blank">Experience It</a>
         <a href="#" target="_blank">Buy Now</a>
     </div>
-    
-    <!-- Info Panel on the Left -->
-    <div id="infoPanel">
-        <h3 id="infoPanelTitle">Select a component to learn more</h3>
-        <p id="infoContent"></p>
-    </div>
-    
-    <!-- Content Area for the 3D Model -->
-    <div id="canvas-container">
-        <script src="three.js"></script>
-        <script src="OrbitControls.js"></script>
-        <script src="OBJLoader.js"></script>
-        <script src="gsap-public/minified/gsap.min.js"></script>
-        <script>
-            let camera, controls, renderer, scene, sunglasses, raycaster, mouse, selectedPart;
-            const targetPosition = { x: 0, y: 0, z: 0 };
-            const originalPositions = new Map();
-            let canvas, ctx;
-            let theta = 0;
-            let phi = Math.PI / 2.5;
-            let spinning = true;
-            const radius = 1.25; 
-            const rotationSpeed = 0.02;
-            const keyState = {};
-        
-            function init() {
-                scene = new THREE.Scene();
-                camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-                renderer = new THREE.WebGLRenderer({ antialias: true });
-                renderer.setSize(window.innerWidth+200, window.innerHeight);  // Full screen without adjusting for info panel
-                renderer.setClearColor(0x244855); // Replace with your desired color
 
-                document.getElementById('canvas-container').appendChild(renderer.domElement);
-        
-                const ambientLight = new THREE.AmbientLight(0x404040, 2);
-                scene.add(ambientLight);
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-                directionalLight.position.set(10, -10, 10);
-                scene.add(directionalLight);
-                const directionalLightTwo = new THREE.DirectionalLight(0xffffff, 2);
-                directionalLight.position.set(0, 10, -10);
-                scene.add(directionalLight);
-        
-                controls = new THREE.OrbitControls(camera, renderer.domElement);
-                controls.enableZoom = false;
-                controls.enablePan = false;
-                controls.target.set(targetPosition.x, targetPosition.y, targetPosition.z);
-        
-                // Adjust camera position to left-justify the model
-                camera.position.set(2, 0, radius);  // Move the camera to the left (x=2)
-                camera.lookAt(targetPosition.x, targetPosition.y, targetPosition.z);
-        
-                raycaster = new THREE.Raycaster();
-                mouse = new THREE.Vector2();
-        
-                canvas = document.createElement("canvas");
-                canvas.style.position = "absolute";
-                canvas.style.top = "0";
-                canvas.style.left = "0";
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                canvas.style.pointerEvents = "none"; 
-                document.body.appendChild(canvas);
-                ctx = canvas.getContext("2d");
-        
-                window.addEventListener("keydown", (event) => { keyState[event.key.toLowerCase()] = true; });
-                window.addEventListener("keyup", (event) => { keyState[event.key.toLowerCase()] = false; });
-        
-                objLoader = new THREE.OBJLoader();
-                objLoader.load('movieCam.obj', (obj) => {
-                    sunglasses = obj;
-                    
-                    sunglasses.position.set(0.5, 0, 0); // Slightly offset model to center it
-                    scene.add(sunglasses);
-        
-                    const boundingBox = new THREE.Box3().setFromObject(sunglasses);
-                    const center = boundingBox.getCenter(new THREE.Vector3());
-                    sunglasses.position.sub(center);
-        
-                    const maxDim = Math.max(boundingBox.getSize(new THREE.Vector3()).x, boundingBox.getSize(new THREE.Vector3()).y, boundingBox.getSize(new THREE.Vector3()).z);
-                    const fitDistance = maxDim / (2 * Math.tan((Math.PI / 180) * camera.fov / 2));
-                    camera.position.set(center.x + 2, center.y, fitDistance * 1.1);  // Adjust camera for left-justified view
-                    camera.lookAt(center); 
-                });
-        
-                window.addEventListener("click", onMouseClick, false);
-                window.addEventListener("resize", onWindowResize, false);
-        
-                animate();
-            }
-        
-            function onWindowResize() {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);  // Keep canvas size full
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-        
-            function onMouseClick(event) {
-                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                raycaster.setFromCamera(mouse, camera);
+    <div id="infoBox"></div>
 
-                const infoPanel = document.getElementById('infoPanel');
-                const infoPanelTitle = document.getElementById('infoPanelTitle');
-                const infoContent = document.getElementById('infoContent');
+    <script src="three.js"></script>
+    <script src="OrbitControls.js"></script>
+    <script src="OBJLoader.js"></script>
+    <script src="gsap-public/minified/gsap.min.js"></script>
+    <script>
+        let camera, controls, renderer, scene, sunglasses, raycaster, mouse, selectedPart;
+        const targetPosition = { x: 0, y: 0, z: 0 };
+        const originalPositions = new Map();
+        const textBoxes = new Map();
+        let canvas, ctx;
+        let theta = 0;  // horizontal rotation angle
+        let phi = Math.PI / 2;  // vertical rotation angle
+        const radius = 1; 
+        const rotationSpeed = 0.02;
+        const keyState = {};
 
-                if (!sunglasses) return;
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-                const intersects = raycaster.intersectObject(sunglasses, true);
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 10);
+            scene.add(directionalLight);
 
-                if (intersects.length > 0) {
-                    const clickedPart = intersects[0].object;
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = false;
+            controls.enablePan = false;
+            controls.target.set(targetPosition.x, targetPosition.y, targetPosition.z);
 
-                    // If clicked part is already selected, reset
-                    if (selectedPart === clickedPart) {
-                        resetSelectedPart();
-                        infoPanel.style.display = 'block';
-                        infoPanelTitle.textContent = 'Select a component to learn more';
-                        infoContent.textContent = '';
-                        return;
-                    }
+            camera.position.set(0, 0, radius);
+            camera.lookAt(targetPosition.x, targetPosition.y, targetPosition.z);
 
-                    // Save the original position of the clicked part if it's the first time
-                    if (!originalPositions.has(clickedPart)) {
-                        originalPositions.set(clickedPart, clickedPart.position.clone());
-                    }
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
 
-                    // If another part is selected, reset its position
-                    if (selectedPart && selectedPart !== clickedPart) {
-                        resetSelectedPart();
-                    }
+            canvas = document.createElement("canvas");
+            canvas.style.position = "absolute";
+            canvas.style.top = "0";
+            canvas.style.left = "0";
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.style.pointerEvents = "none"; 
+            document.body.appendChild(canvas);
+            ctx = canvas.getContext("2d");
 
-                    // Animate the clicked part
-                    gsap.to(clickedPart.position, {
-                        y: originalPositions.get(clickedPart).y + 0.25, // Animate to a higher position
-                        duration: 1.0,
-                        ease: "power2.out"
-                    });
+            window.addEventListener("keydown", (event) => { keyState[event.key.toLowerCase()] = true; });
+            window.addEventListener("keyup", (event) => { keyState[event.key.toLowerCase()] = false; });
 
-                    // Get the part's name, remove the word "mesh" if present, and capitalize each word
-                    let formattedName = clickedPart.name || 'Unnamed Part';
-                    formattedName = formattedName.replace(/_/g, ' ');
-                    formattedName = formattedName.replace(/mesh/gi, ''); // Remove the word "mesh" (case-insensitive)
-                    formattedName = formattedName.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize each word
+            objLoader = new THREE.OBJLoader();
+            objLoader.load('movieCam.obj', (obj) => {
+                sunglasses = obj;
+                
+                sunglasses.position.set(0, 0, 0);
+                scene.add(sunglasses);
 
-                    // Update the info panel with the part's formatted name as the title
-                    infoPanel.style.display = 'block';
-                    infoPanelTitle.textContent = `${formattedName.trim()}`;
-                    infoContent.innerHTML = `<a href="#" style="color: #000;">You clicked on the <strong>${formattedName}</strong>. More details about this part will go here.</a>`;
+                // Recalculate bounding box and center the obje3ct
+                const boundingBox = new THREE.Box3().setFromObject(sunglasses);
+                const center = boundingBox.getCenter(new THREE.Vector3());
+                sunglasses.position.sub(center);  // recenter object to bounding box center
 
-                    // Set the selected part
-                    selectedPart = clickedPart;
-                } else {
-                    // Reset to default info panel when clicking outside of the model
-                    infoPanel.style.display = 'block';
-                    infoPanelTitle.textContent = 'Select a component to learn more';
-                    infoContent.textContent = '';
+                const maxDim = Math.max(boundingBox.getSize(new THREE.Vector3()).x, boundingBox.getSize(new THREE.Vector3()).y, boundingBox.getSize(new THREE.Vector3()).z);
+                const fitDistance = maxDim / (2 * Math.tan((Math.PI / 180) * camera.fov / 2));
+                camera.position.set(center.x, center.y, fitDistance * 1.1); // Adjust camera to fit object
+                camera.lookAt(center); 
+            });
+
+            window.addEventListener("click", onMouseClick, false);
+            window.addEventListener("resize", onWindowResize, false);
+
+            animate();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function onMouseClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            if (!sunglasses) return;
+
+            const intersects = raycaster.intersectObject(sunglasses, true);
+            const infoBox = document.getElementById('infoBox');
+
+            if (intersects.length > 0) {
+                const clickedPart = intersects[0].object;
+
+                if (selectedPart === clickedPart) {
+                    resetSelectedPart();
+                    infoBox.style.display = 'none';
+                    return;
+                }
+
+                if (!originalPositions.has(clickedPart)) {
+                    originalPositions.set(clickedPart, clickedPart.position.clone());
+                }
+
+                if (selectedPart && selectedPart !== clickedPart) {
                     resetSelectedPart();
                 }
+
+                const maxMoveDistance = 2;
+                const distanceFromCenter = clickedPart.position.distanceTo(new THREE.Vector3(0, 0, 0));
+
+                if (distanceFromCenter > maxMoveDistance) {
+                    const direction = clickedPart.position.clone().normalize();
+                    clickedPart.position.copy(direction.multiplyScalar(maxMoveDistance));
+                }
+
+                gsap.to(clickedPart.position, {
+                    y: originalPositions.get(clickedPart).y + 0.25,
+                    duration: 1.0
+                });
+
+                let formattedName = clickedPart.name || 'Unnamed Part';
+                formattedName = formattedName.replace(/_/g, ' ').replace(/mesh/gi, '').trim();
+                infoBox.style.display = 'block';
+                infoBox.innerHTML = `<a href="#" id="infoLink" style="color: #fff; text-decoration: underline;">${formattedName}</a>`;
+
+                selectedPart = clickedPart;
+            } else {
+                resetSelectedPart();
+                infoBox.style.display = 'none';
+            }
+        }
+
+        function resetSelectedPart() {
+            if (selectedPart && originalPositions.has(selectedPart)) {
+                const original = originalPositions.get(selectedPart);
+                gsap.to(selectedPart.position, {
+                    x: original.x,
+                    y: original.y,
+                    z: original.z,
+                    duration: 1.0
+                });
+                selectedPart = null;
+            }
+        }
+
+        function updateTextBoxPositions() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+            textBoxes.forEach((textBox, mesh) => {
+                const vector = mesh.position.clone();
+                vector.project(camera);
+    
+                const x = (vector.x * 0.8 + 0.75) * window.innerWidth;
+                const y = (-vector.y * 0.5 + 0.6) * window.innerHeight;
+    
+                textBox.style.left = `${x}px`;
+                textBox.style.top = `${y}px`;
+    
+                if (selectedPart === mesh) {
+                    textBox.style.display = "block";
+    
+                    const rect = textBox.getBoundingClientRect();
+                    const textBoxX = rect.left + rect.width / 2;
+                    const textBoxY = rect.top;
+    
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(textBoxX, textBoxY);
+                    ctx.strokeStyle = "black";
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else {
+                    textBox.style.display = "none";
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Camera rotation controls
+            if (keyState['a'] || keyState['arrowleft']) {
+                theta -= rotationSpeed;
+            }
+            if (keyState['d'] || keyState['arrowright']) {
+                theta += rotationSpeed;
+            }
+            if (keyState['w'] || keyState['arrowup']) {
+                phi += rotationSpeed; 
+                phi = Math.min(Math.PI, Math.max(0, phi)); // Limit vertical rotation
+            }
+            if (keyState['s'] || keyState['arrowdown']) {
+                phi -= rotationSpeed;
+                phi = Math.min(Math.PI, Math.max(0, phi)); // Limit vertical rotation
             }
 
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            camera.position.set(x, y, z);
+            camera.lookAt(targetPosition.x, targetPosition.y, targetPosition.z);
 
-            function resetSelectedPart() {
-                if (selectedPart && originalPositions.has(selectedPart)) {
-                    const original = originalPositions.get(selectedPart);
-                    gsap.to(selectedPart.position, {
-                        x: original.x,
-                        y: original.y,
-                        z: original.z,
-                        duration: 1.0
-                    });
-                    selectedPart = null;
-                }
-            }
+            controls.update();
 
-            function animate() {
-                requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
 
-                const defaultRotationSpeed = 0.005; // Small value for a slow spin
-
-                // Check for user input and modify theta accordingly
-                let userInteracting = false;
-                if (keyState['a'] || keyState['arrowleft']) {
-                    theta -= rotationSpeed;
-                    userInteracting = true;
-                }
-                if (keyState['d'] || keyState['arrowright']) {
-                    theta += rotationSpeed;
-                    userInteracting = true;
-                }
-                if (keyState['w'] || keyState['arrowup']) {
-                    phi += rotationSpeed; 
-                    phi = Math.min(Math.PI, Math.max(0, phi));
-                    userInteracting = true;
-                }
-                if (keyState['s'] || keyState['arrowdown']) {
-                    phi -= rotationSpeed;
-                    phi = Math.min(Math.PI, Math.max(0, phi));
-                    userInteracting = true;
-                }
-
-                // Apply automatic spin if there's no user input
-                if (!userInteracting) {
-                    theta += defaultRotationSpeed;
-                }
-
-                // Update camera position based on theta and phi
-                const x = radius * Math.sin(phi) * Math.cos(theta);
-                const y = radius * Math.cos(phi);
-                const z = radius * Math.sin(phi) * Math.sin(theta);
-                camera.position.set(x, y, z);
-                camera.lookAt(targetPosition.x, targetPosition.y, targetPosition.z);
-
-                controls.update();
-
-                renderer.render(scene, camera);
-            }
-
-        
-            init();
-        </script>     
-    </div>
+        init();
+    </script>     
 </body>
 </html>
