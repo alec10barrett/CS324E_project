@@ -12,6 +12,27 @@
             overflow: hidden;
             font-family: Arial, sans-serif;
         }
+        
+        .top-left-links {
+
+            position: absolute;
+            top: 5px;
+            left: -375px;
+            display: flex;
+            gap: 50px;
+        }
+        .top-left-links a {
+            text-decoration: none;
+            font-family: 'Arial', sans-serif;
+            color: #ddc1c1;
+            background-color: #be1919;
+            border-radius: 50%;
+            font-size: 26pt;
+            position: relative;
+            padding: 5px 10px;
+            border: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
         #infoBox {
             position: absolute;
@@ -29,7 +50,7 @@
 
         .top-right-links {
             position: absolute;
-            top: 25px;
+            top: 5px;
             right: 10px;
             display: flex;
             gap: 50px;
@@ -37,8 +58,8 @@
 
         .top-right-links a {
             text-decoration: none;
-            font-family: 'Georgia', sans-serif;
-            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            color: #ddc1c1;
             font-size: 18pt;
             position: relative;
             padding: 5px 10px;
@@ -48,7 +69,7 @@
 
         .top-right-links a:hover {
             text-decoration: none;
-            background-color: rgba(255, 115, 0, 0.2);
+            background-color: rgba(207, 29, 9, 0.2);
             color: #ffffff;
         }
 
@@ -69,6 +90,8 @@
         <a href="#" target="_blank">Features</a>
         <a href="#" target="_blank">Experience It</a>
         <a href="#" target="_blank">Buy Now</a>
+    <div class="top-left-links">
+        <<a href="#" target="_blank">Leica</a>
     </div>
 
     <div id="infoBox"></div>
@@ -185,7 +208,7 @@
                     resetSelectedPart();
                 }
 
-                const maxMoveDistance = 2;
+                const maxMoveDistance = .5;
                 const distanceFromCenter = clickedPart.position.distanceTo(new THREE.Vector3(0, 0, 0));
 
                 if (distanceFromCenter > maxMoveDistance) {
@@ -194,14 +217,16 @@
                 }
 
                 gsap.to(clickedPart.position, {
-                    y: originalPositions.get(clickedPart).y + 0.25,
-                    duration: 1.0
+                    y: .35,
+                    x: .1,
+                    z: 0,
+                    duration: 1.5
                 });
 
                 let formattedName = clickedPart.name || 'Unnamed Part';
                 formattedName = formattedName.replace(/_/g, ' ').replace(/mesh/gi, '').trim();
                 infoBox.style.display = 'block';
-                infoBox.innerHTML = `<a href="#" id="infoLink" style="color: #fff; text-decoration: underline;">${formattedName}</a>`;
+                infoBox.innerHTML = `<a href="#" id="infoLink" style="color: #ddc1c1; text-decoration: underline;">${formattedName}</a>`;
 
                 selectedPart = clickedPart;
             } else {
@@ -260,17 +285,17 @@
 
             // Camera rotation controls
             if (keyState['a'] || keyState['arrowleft']) {
-                theta -= rotationSpeed;
-            }
-            if (keyState['d'] || keyState['arrowright']) {
                 theta += rotationSpeed;
             }
+            if (keyState['d'] || keyState['arrowright']) {
+                theta -= rotationSpeed;
+            }
             if (keyState['w'] || keyState['arrowup']) {
-                phi += rotationSpeed; 
+                phi -= rotationSpeed; 
                 phi = Math.min(Math.PI, Math.max(0, phi)); // Limit vertical rotation
             }
             if (keyState['s'] || keyState['arrowdown']) {
-                phi -= rotationSpeed;
+                phi += rotationSpeed;
                 phi = Math.min(Math.PI, Math.max(0, phi)); // Limit vertical rotation
             }
 
