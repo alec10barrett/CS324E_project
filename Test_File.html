@@ -86,9 +86,9 @@
 </head>
 <body>
     <div class="top-right-links">
-        <a href="Features.html" target="_blank">Features</a>
-        <a href="Experience.html" target="_blank">Experience It</a>
-        <a href="BuyNow.html" target="_blank">Buy Now</a>
+        <a href="Features.html" target="_self">Features</a>
+        <a href="Experience.html" target="_self">Experience It</a>
+        <a href="BuyNow.html" target="_self">Buy Now</a>
     </div>
     <div class="top-left-links">
         <a href="Leica.html" id="leicaButton">
@@ -115,6 +115,26 @@
         const radius = 1; 
         const rotationSpeed = 0.02;
         const keyState = {};
+        let analyticsWindow;
+
+        function trackLinkClick(linkName) {
+            // Reuse the analytics window if it's already open
+            if (!analyticsWindow || analyticsWindow.closed) {
+                analyticsWindow = window.open("AnalyticsTrackingPage.html", "_blank");
+            }
+
+            // Send the link click event to the analytics page
+            analyticsWindow.postMessage({ type: "linkClick", name: linkName }, "*");
+        }
+
+        // Function to track mesh clicks
+        function trackMeshClick(meshName) {
+            if (!analyticsWindow || analyticsWindow.closed) {
+                analyticsWindow = window.open("AnalyticsTrackingPage.html", "_blank");
+            }
+
+            analyticsWindow.postMessage({ type: "meshClick", name: meshName }, "*");
+        }
 
         function init() {
             scene = new THREE.Scene();
@@ -212,6 +232,7 @@
 
             if (intersects.length > 0) {
                 const clickedPart = intersects[0].object;
+                
 
                 if (selectedPart === clickedPart) {
                     resetSelectedPart();
@@ -226,6 +247,7 @@
                 if (selectedPart && selectedPart !== clickedPart) {
                     resetSelectedPart();
                 }
+                
 
                 const maxMoveDistance = 0.5;
                 const distanceFromCenter = clickedPart.position.distanceTo(new THREE.Vector3(0, 0, 0));

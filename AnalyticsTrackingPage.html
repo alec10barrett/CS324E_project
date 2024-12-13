@@ -3,126 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard</title>
+    <title>Analytics Tracker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f4f4f9;
-            color: #333;
+            padding: 20px;
+            background-color: #f4f4f4;
         }
 
         h1 {
-            margin: 20px 0;
+            color: #333;
         }
 
         table {
+            width: 100%;
             border-collapse: collapse;
-            width: 80%;
             margin: 20px 0;
         }
 
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
 
         th {
-            background-color: #4CAF50;
-            color: white;
+            background-color: #f9f9f9;
         }
 
-        .button {
-            margin: 20px;
+        #resetButton {
+            display: inline-block;
             padding: 10px 15px;
             font-size: 16px;
-            background-color: #4CAF50;
             color: white;
+            background-color: #d9534f;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
-            border-radius: 4px;
         }
 
-        .button:hover {
-            background-color: #45a049;
+        #resetButton:hover {
+            background-color: #c9302c;
         }
     </style>
 </head>
 <body>
-    <h1>Website Analytics Dashboard</h1>
-    <button class="button" onclick="resetAnalytics()">Reset Analytics</button>
+    <h1>Link Click Analytics</h1>
     <table>
         <thead>
             <tr>
-                <th>Element</th>
+                <th>Link Name</th>
                 <th>Click Count</th>
             </tr>
         </thead>
         <tbody id="analyticsTableBody">
-            <!-- Rows will be dynamically populated -->
+            <!-- Data will be dynamically populated -->
         </tbody>
     </table>
+    <button id="resetButton">Reset Analytics</button>
 
     <script>
-        // Object to store click counts
-        const analytics = {
-            links: {},
-            meshes: {}
-        };
+        // List of link names to track
+        const links = ["Features", "Experience It", "Buy Now", "Leica"];
 
-        // Function to update the analytics table
+        // Initialize click counts in localStorage if not already present
+        function initializeAnalytics() {
+            if (!localStorage.getItem("linkClicks")) {
+                const initialCounts = links.reduce((acc, link) => {
+                    acc[link] = 0;
+                    return acc;
+                }, {});
+                localStorage.setItem("linkClicks", JSON.stringify(initialCounts));
+            }
+        }
+
+        // Get current analytics data from localStorage
+        function getAnalytics() {
+            return JSON.parse(localStorage.getItem("linkClicks"));
+        }
+
+        // Update the table with analytics data
         function updateAnalyticsTable() {
-            const tableBody = document.getElementById('analyticsTableBody');
-            tableBody.innerHTML = '';
+            const analytics = getAnalytics();
+            const tableBody = document.getElementById("analyticsTableBody");
+            tableBody.innerHTML = ""; // Clear existing rows
 
-            // Add link data
-            Object.keys(analytics.links).forEach(link => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${link}</td><td>${analytics.links[link]}</td>`;
-                tableBody.appendChild(row);
-            });
-
-            // Add mesh data
-            Object.keys(analytics.meshes).forEach(mesh => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${mesh}</td><td>${analytics.meshes[mesh]}</td>`;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Function to reset analytics
-        function resetAnalytics() {
-            analytics.links = {};
-            analytics.meshes = {};
-            updateAnalyticsTable();
-        }
-
-        // Simulated click tracking setup
-        document.addEventListener('DOMContentLoaded', () => {
-            // Simulate link tracking
-            const links = document.querySelectorAll('a');
             links.forEach(link => {
-                link.addEventListener('click', (event) => {
-                    const linkName = event.target.textContent || event.target.id;
-                    analytics.links[linkName] = (analytics.links[linkName] || 0) + 1;
-                    updateAnalyticsTable();
-                });
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                const countCell = document.createElement("td");
+
+                nameCell.textContent = link;
+                countCell.textContent = analytics[link] || 0;
+
+                row.appendChild(nameCell);
+                row.appendChild(countCell);
+                tableBody.appendChild(row);
             });
+        }
 
-            // Simulate mesh tracking
-            window.trackMeshClick = (meshName) => {
-                analytics.meshes[meshName] = (analytics.meshes[meshName] || 0) + 1;
-                updateAnalyticsTable();
-            };
-
-            // Initial table update
+        // Reset analytics data
+        document.getElementById("resetButton").addEventListener("click", () => {
+            const initialCounts = links.reduce((acc, link) => {
+                acc[link] = 0;
+                return acc;
+            }, {});
+            localStorage.setItem("linkClicks", JSON.stringify(initialCounts));
             updateAnalyticsTable();
         });
+
+        // Listen for messages from other pages
+        window.addEventListener("message", (event) => {
+            if (event.data.type === "linkClick") {
+                const analytics = getAnalytics();
+                analytics[event.data.name] = (analytics[event.data.name] || 0) + 1;
+                localStorage.setItem("linkClicks", JSON.stringify(analytics));
+                updateAnalyticsTable();
+            }
+        });
+
+        // Initialize and populate the table on page load
+        initializeAnalytics();
+        updateAnalyticsTable();
     </script>
 </body>
 </html>
