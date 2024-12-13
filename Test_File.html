@@ -86,15 +86,17 @@
 </head>
 <body>
     <div class="top-right-links">
+        <!-- Removed direct hrefs that cause immediate navigation -->
         <a href="#" onclick="handleLinkClick(event, 'Features.html', 'Features')">Features</a>
         <a href="#" onclick="handleLinkClick(event, 'Experience.html', 'Experience It')">Experience It</a>
         <a href="#" onclick="handleLinkClick(event, 'BuyNow.html', 'Buy Now')">Buy Now</a>
-        <a href="AnalyticsTrackingPage.html" target="_blank">Analytics</a>
+        <!-- Clicking this will open the analytics window in a separate tab/window -->
+        <a href="#" onclick="openAnalyticsWindow()">Analytics Window</a>
     </div>
     <div class="top-left-links">
         <a href="#" onclick="handleLinkClick(event, 'Leica.html', 'Leica')"><b>Leica</b></a>
     </div>
-    
+
     <div id="infoBox"></div>
 
     <script src="three.js"></script>
@@ -113,24 +115,26 @@
         const rotationSpeed = 0.02;
         const keyState = {};
         
+        let analyticsWindow;
+        function openAnalyticsWindow() {
+        analyticsWindow = window.open('AnalyticsTrackingPage.html', 'analyticsWindow');
+        }
+        function trackLinkClick(linkName) {
+            if (analyticsWindow && !analyticsWindow.closed) {
+                setTimeout(() => {
+                analyticsWindow.postMessage({ type: 'linkClick', name: linkName }, '*');
+                }, 50);
+            }
+        }
         function handleLinkClick(event, url, linkName) {
-            event.preventDefault(); // Prevent immediate navigation
-            
-            // Post the tracking message
-            window.postMessage({ type: 'linkClick', name: linkName }, '*');
-
-            // After a short delay, navigate to the desired page.
-            // Adjust the timeout as needed. 200ms is often enough, but can be changed.
+            event.preventDefault();
+            trackLinkClick(linkName);
+            // Wait a short time to ensure the message is sent before opening the link
             setTimeout(() => {
                 window.open(url, '_blank');
-            }, 200);
+            }, 700);
         }
 
-        function trackLinkClick(linkName) {
-            // This function can remain for compatibility if needed, 
-            // but here we're using handleLinkClick instead.
-            window.postMessage({ type: 'linkClick', name: linkName }, '*');
-        }
 
         function init() {
             scene = new THREE.Scene();
