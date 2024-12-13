@@ -86,15 +86,16 @@
 </head>
 <body>
     <div class="top-right-links">
-        <a href="#" target="_blank">Features</a>
-        <a href="#" target="_blank">Experience It</a>
-        <a href="#" target="_blank">Buy Now</a>
+        <a href="Features.html" target="_blank">Features</a>
+        <a href="Experience.html" target="_blank">Experience It</a>
+        <a href="BuyNow.html" target="_blank">Buy Now</a>
     </div>
     <div class="top-left-links">
-        <a href="#" id="leicaButton">
+        <a href="Leica.html" id="leicaButton">
             <b>Leica</b>
         </a>
     </div>
+    
         
 
     <div id="infoBox"></div>
@@ -260,8 +261,6 @@
         }
 
         function updateTextBoxPositions() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             if (!selectedPart) return;
 
             // Project 3D position to 2D screen space
@@ -274,23 +273,25 @@
             const infoBox = document.getElementById("infoBox");
 
             if (infoBox.style.display === "block") {
-                // Set infoBox position dynamically
-                const offset = 20; // Offset to avoid overlapping with the object
+                // Offset the infoBox to position it dynamically based on mesh location
+                const verticalOffset = -10; // Adjust to fine-tune vertical spacing
+                const horizontalOffset = 0; // Adjust to fine-tune horizontal alignment
+
                 const newLeft = Math.min(
-                    Math.max(meshScreenX + offset, 10), 
+                    Math.max(meshScreenX + horizontalOffset - infoBox.offsetWidth / 2, 10),
                     window.innerWidth - infoBox.offsetWidth - 10
                 );
                 const newTop = Math.min(
-                    Math.max(meshScreenY - infoBox.offsetHeight / 2, 10), 
+                    Math.max(meshScreenY + verticalOffset - infoBox.offsetHeight, 10),
                     window.innerHeight - infoBox.offsetHeight - 10
                 );
 
                 infoBox.style.left = `${newLeft}px`;
                 infoBox.style.top = `${newTop}px`;
-            
-
             }
         }
+
+
 
 
         function resetSelectedPart() {
