@@ -7,11 +7,11 @@ If you want to use the Github, it is https://github.com/alec10barrett/CS324E_pro
 
    This should take you to the beginning page
 
-Use the WAD buttons to the arrow keys to move through the model in 3D
+Use the WAD buttons or the arrow keys to move through the model in 3D
 
 Click on parts of the camera to see the parts 
 
 Click on the links for our call to action test pages
 
-Click on the analytics button to see what users are clicking on 
+Click on the analytics button to see what users are clicking on (note: you must have the analytics page open first before it will start counting the links)
 
