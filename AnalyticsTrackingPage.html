@@ -6,54 +6,99 @@
     <title>Analytics Tracking</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
         }
         h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 28px;
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 16px;
+            color: #555;
+            text-align: center;
+            margin-bottom: 20px;
         }
         table {
+            width: 100%;
             border-collapse: collapse;
-            width: 300px;
+            margin-top: 20px;
         }
         th, td {
-            border: 1px solid #333;
-            padding: 8px 12px;
+            padding: 12px;
             text-align: left;
         }
         th {
-            background: #333;
-            color: #fff;
+            background-color: #d32f2f;
+            color: white;
+            font-weight: bold;
+        }
+        td {
+            background-color: #fafafa;
+            border: 1px solid #ddd;
+        }
+        tr:nth-child(even) td {
+            background-color: #f1f1f1;
+        }
+        td {
+            font-size: 16px;
+            color: #333;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #777;
         }
     </style>
 </head>
 <body>
-    <h1>Link Click Analytics</h1>
-    <p>This page displays how many times each link was clicked:</p>
-    <table>
-        <tr>
-            <th>Link</th>
-            <th>Clicks</th>
-        </tr>
-        <tr>
-            <td>Leica</td>
-            <td id="leicaCount">0</td>
-        </tr>
-        <tr>
-            <td>Features</td>
-            <td id="featuresCount">0</td>
-        </tr>
-        <tr>
-            <td>Experience It</td>
-            <td id="experienceCount">0</td>
-        </tr>
-        <tr>
-            <td>Buy Now</td>
-            <td id="buyNowCount">0</td>
-        </tr>
-    </table>
+    <div class="container">
+        <h1>Link Click Analytics</h1>
+        <p>This page displays how many times each link was clicked:</p>
+        <table>
+            <tr>
+                <th>Link</th>
+                <th>Clicks</th>
+            </tr>
+            <tr>
+                <td>Leica</td>
+                <td id="leicaCount">0</td>
+            </tr>
+            <tr>
+                <td>Features</td>
+                <td id="featuresCount">0</td>
+            </tr>
+            <tr>
+                <td>Experience It</td>
+                <td id="experienceCount">0</td>
+            </tr>
+            <tr>
+                <td>Buy Now</td>
+                <td id="buyNowCount">0</td>
+            </tr>
+        </table>
+        <div class="footer">
+            <p>&copy; 2024 Analytics Tracking. All rights reserved.</p>
+        </div>
+    </div>
 
     <script>
         let clickCounts = {
