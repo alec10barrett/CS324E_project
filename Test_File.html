@@ -86,16 +86,15 @@
 </head>
 <body>
     <div class="top-right-links">
-        <a href="Features.html" target="_blank" onclick="trackLinkClick('Features')">Features</a>
-        <a href="Experience.html" target="_blank" onclick="trackLinkClick('Experience It')">Experience It</a>
-        <a href="BuyNow.html" target="_blank" onclick="trackLinkClick('Buy Now')">Buy Now</a>
+        <a href="#" onclick="handleLinkClick(event, 'Features.html', 'Features')">Features</a>
+        <a href="#" onclick="handleLinkClick(event, 'Experience.html', 'Experience It')">Experience It</a>
+        <a href="#" onclick="handleLinkClick(event, 'BuyNow.html', 'Buy Now')">Buy Now</a>
         <a href="AnalyticsTrackingPage.html" target="_blank">Analytics</a>
     </div>
     <div class="top-left-links">
-        <a href="Leica.html" target="_blank" id="leicaButton" onclick="trackLinkClick('Leica')">
-            <b>Leica</b>
-        </a>
+        <a href="#" onclick="handleLinkClick(event, 'Leica.html', 'Leica')"><b>Leica</b></a>
     </div>
+    
     <div id="infoBox"></div>
 
     <script src="three.js"></script>
@@ -114,8 +113,22 @@
         const rotationSpeed = 0.02;
         const keyState = {};
         
+        function handleLinkClick(event, url, linkName) {
+            event.preventDefault(); // Prevent immediate navigation
+            
+            // Post the tracking message
+            window.postMessage({ type: 'linkClick', name: linkName }, '*');
+
+            // After a short delay, navigate to the desired page.
+            // Adjust the timeout as needed. 200ms is often enough, but can be changed.
+            setTimeout(() => {
+                window.open(url, '_blank');
+            }, 200);
+        }
+
         function trackLinkClick(linkName) {
-            // Post a message to the current window
+            // This function can remain for compatibility if needed, 
+            // but here we're using handleLinkClick instead.
             window.postMessage({ type: 'linkClick', name: linkName }, '*');
         }
 
