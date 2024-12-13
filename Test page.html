@@ -198,8 +198,12 @@
 
 
         let isMeshMoved = false; // Flag to track if the mesh has already moved
+        const clickSound = new Audio('sounds/mouse-click-117076.mp3');
+
 
         function onMouseClick(event) {
+            clickSound.currentTime = 0; // Reset to the beginning of the sound
+            clickSound.play();
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
