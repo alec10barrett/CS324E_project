@@ -1,4 +1,4 @@
-You can use the zip file or go to our Github to acces this project. You will need VS Code to see the webpage.
+You can use the zip file or go to our Github to access this project. You will need VS Code to see the webpage.
 If you want to use the Github, it is https://github.com/alec10barrett/CS324E_project
 
 

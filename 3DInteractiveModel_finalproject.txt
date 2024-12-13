@@ -1,0 +1,14 @@
+This project creates an interactive 3D model viewer using Three.js, where users can interact with a 3D object, in this case, sunglasses, by clicking on different parts of the model. 
+When a user clicks on the object, the corresponding part is selected, and an information box appears, displaying the name of the selected part. 
+Users can also move the selected part within a defined range, with smooth animations powered by GSAP. 
+The scene includes basic lighting, camera controls, and raycasting for object interaction. 
+Additionally, the project tracks user interactions through link clicks and displays dynamic UI elements that adapt to the user's interactions, enhancing the overall experience.
+
+
+Each teammember ended up working on each part of the project together. Marcus was primarily in charge of the 3D model functionality as was Alec and Kiyonna handled the GUI systmes and the frontend for the project.
+
+
+
+
+
+
