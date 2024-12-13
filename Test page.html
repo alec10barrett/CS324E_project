@@ -12,56 +12,76 @@
             overflow: hidden;
             font-family: Arial, sans-serif;
         }
+        
+        .top-left-links {
+            position: fixed; /* Ensures the position is fixed and responsive */
+            top: 5px; /* Adjusts the vertical position */
+            left: 15px; /* Adjusts the horizontal position */
+            display: flex;
+            gap: 15px;
+        }
+
+        .top-left-links a {
+            text-decoration: none;
+            font-family: 'Arial', sans-serif;
+            color: #ddc1c1;
+            background-color: #be1919;
+            border-radius: 50%;
+            font-size: 36pt; 
+            padding: 10px 15px; 
+            border: none;
+            transition: background-color 0.3s, color 0.3s;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .top-left-links a:hover {
+            background-color: rgba(190, 25, 25, 0.5); 
+            color: #ffffff;
+        }
 
         #infoBox {
             position: absolute;
             top: 100px;
             left: 100px;
-            background-color: none;
+            background-color: rgb(65, 51, 45);
             color: #fff;
             padding: 15px;
             border-radius: 8px;
             display: none;
             max-width: 250px;
-            font-size: 48px;
+            font-size: 24px; /* Adjusted font size */
             font-family: 'Georgia', serif;
+            transition: left 0.2s, top 0.2s;
+        }
+
+        #infoBox a {
+            color: #ddc1c1;
+            text-decoration: none; /* Removes underline */
         }
 
         .top-right-links {
-            position: absolute;
-            top: 25px;
+            position: fixed; /* Ensures consistent positioning */
+            top: 15px;
             right: 10px;
             display: flex;
-            gap: 50px;
+            gap: 15px;
         }
 
         .top-right-links a {
             text-decoration: none;
-            font-family: 'Georgia', sans-serif;
-            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            color: #ddc1c1;
             font-size: 18pt;
-            position: relative;
             padding: 5px 10px;
             border: none;
             transition: background-color 0.3s, color 0.3s;
         }
 
         .top-right-links a:hover {
-            text-decoration: none;
-            background-color: rgba(255, 115, 0, 0.2);
+            background-color: rgba(207, 29, 9, 0.2);
             color: #ffffff;
         }
-
-        .text-box {
-            position: absolute;
-            background-color: rgba(39, 140, 208, 0.8);
-            padding: 10px;
-            box-shadow: 0px 0px 10px rgba(200, 14, 207, 0.674);
-            font-family: 'Georgia';
-            font-size: 18pt;
-            display: none;
-        }
-
     </style>
 </head>
 <body>
@@ -70,6 +90,12 @@
         <a href="#" target="_blank">Experience It</a>
         <a href="#" target="_blank">Buy Now</a>
     </div>
+    <div class="top-left-links">
+        <a href="#" id="leicaButton">
+            <b>Leica</b>
+        </a>
+    </div>
+        
 
     <div id="infoBox"></div>
 
@@ -158,6 +184,21 @@
             canvas.height = window.innerHeight;
         }
 
+        function screenToWorld(screenX, screenY) {
+            const vector = new THREE.Vector3(
+                (screenX / window.innerWidth) * 2 - 1,
+                -(screenY / window.innerHeight) * 2 + 1,
+                0.5 // Assuming the depth is halfway between near and far planes
+            );
+            vector.unproject(camera);
+            const dir = vector.sub(camera.position).normalize();
+            const distance = -camera.position.z / dir.z; // Calculate distance to z=0 plane
+            return camera.position.clone().add(dir.multiplyScalar(distance));
+        }
+
+
+        let isMeshMoved = false; // Flag to track if the mesh has already moved
+
         function onMouseClick(event) {
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -185,7 +226,7 @@
                     resetSelectedPart();
                 }
 
-                const maxMoveDistance = 2;
+                const maxMoveDistance = 0.5;
                 const distanceFromCenter = clickedPart.position.distanceTo(new THREE.Vector3(0, 0, 0));
 
                 if (distanceFromCenter > maxMoveDistance) {
@@ -193,15 +234,23 @@
                     clickedPart.position.copy(direction.multiplyScalar(maxMoveDistance));
                 }
 
-                gsap.to(clickedPart.position, {
-                    y: originalPositions.get(clickedPart).y + 0.25,
-                    duration: 1.0
-                });
+                // Animate the mesh to the new position only once
+                if (!isMeshMoved) {
+                    gsap.to(clickedPart.position, {
+                        y: 0.15,
+                        x: 0.25,
+                        z: 0,
+                        duration: 1.5,
+                        onComplete: () => {
+                            isMeshMoved = true; // Prevent further movement
+                        }
+                    });
+                }
 
                 let formattedName = clickedPart.name || 'Unnamed Part';
                 formattedName = formattedName.replace(/_/g, ' ').replace(/mesh/gi, '').trim();
                 infoBox.style.display = 'block';
-                infoBox.innerHTML = `<a href="#" id="infoLink" style="color: #fff; text-decoration: underline;">${formattedName}</a>`;
+                infoBox.innerHTML = `<a href="#" id="infoLink" style="color: #ddc1c1; text-decoration: underline;">${formattedName}</a>`;
 
                 selectedPart = clickedPart;
             } else {
@@ -210,6 +259,40 @@
             }
         }
 
+        function updateTextBoxPositions() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!selectedPart) return;
+
+            // Project 3D position to 2D screen space
+            const vector = selectedPart.position.clone();
+            vector.project(camera);
+
+            const meshScreenX = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const meshScreenY = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+
+            const infoBox = document.getElementById("infoBox");
+
+            if (infoBox.style.display === "block") {
+                // Set infoBox position dynamically
+                const offset = 20; // Offset to avoid overlapping with the object
+                const newLeft = Math.min(
+                    Math.max(meshScreenX + offset, 10), 
+                    window.innerWidth - infoBox.offsetWidth - 10
+                );
+                const newTop = Math.min(
+                    Math.max(meshScreenY - infoBox.offsetHeight / 2, 10), 
+                    window.innerHeight - infoBox.offsetHeight - 10
+                );
+
+                infoBox.style.left = `${newLeft}px`;
+                infoBox.style.top = `${newTop}px`;
+            
+
+            }
+        }
+
+
         function resetSelectedPart() {
             if (selectedPart && originalPositions.has(selectedPart)) {
                 const original = originalPositions.get(selectedPart);
@@ -217,61 +300,34 @@
                     x: original.x,
                     y: original.y,
                     z: original.z,
-                    duration: 1.0
+                    duration: 1.0,
                 });
                 selectedPart = null;
+                isMeshMoved = false; // Allow movement for a new selection
             }
         }
 
-        function updateTextBoxPositions() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-            textBoxes.forEach((textBox, mesh) => {
-                const vector = mesh.position.clone();
-                vector.project(camera);
-    
-                const x = (vector.x * 0.8 + 0.75) * window.innerWidth;
-                const y = (-vector.y * 0.5 + 0.6) * window.innerHeight;
-    
-                textBox.style.left = `${x}px`;
-                textBox.style.top = `${y}px`;
-    
-                if (selectedPart === mesh) {
-                    textBox.style.display = "block";
-    
-                    const rect = textBox.getBoundingClientRect();
-                    const textBoxX = rect.left + rect.width / 2;
-                    const textBoxY = rect.top;
-    
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(textBoxX, textBoxY);
-                    ctx.strokeStyle = "black";
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                } else {
-                    textBox.style.display = "none";
-                }
-            });
-        }
+
+
+
 
         function animate() {
             requestAnimationFrame(animate);
 
             // Camera rotation controls
             if (keyState['a'] || keyState['arrowleft']) {
-                theta -= rotationSpeed;
-            }
-            if (keyState['d'] || keyState['arrowright']) {
                 theta += rotationSpeed;
             }
+            if (keyState['d'] || keyState['arrowright']) {
+                theta -= rotationSpeed;
+            }
             if (keyState['w'] || keyState['arrowup']) {
-                phi += rotationSpeed; 
-                phi = Math.min(Math.PI, Math.max(0, phi)); // Limit vertical rotation
+                phi -= rotationSpeed;
+                phi = Math.min(Math.PI, Math.max(0, phi));
             }
             if (keyState['s'] || keyState['arrowdown']) {
-                phi -= rotationSpeed;
-                phi = Math.min(Math.PI, Math.max(0, phi)); // Limit vertical rotation
+                phi += rotationSpeed;
+                phi = Math.min(Math.PI, Math.max(0, phi));
             }
 
             const x = radius * Math.sin(phi) * Math.cos(theta);
@@ -280,10 +336,14 @@
             camera.position.set(x, y, z);
             camera.lookAt(targetPosition.x, targetPosition.y, targetPosition.z);
 
-            controls.update();
+            // Update infoBox position and draw the line
+            updateTextBoxPositions();
 
+            controls.update();
             renderer.render(scene, camera);
         }
+
+
 
         init();
     </script>     
