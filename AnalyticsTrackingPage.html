@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        h1 {
+            margin: 20px 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .button {
+            margin: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Website Analytics Dashboard</h1>
+    <button class="button" onclick="resetAnalytics()">Reset Analytics</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Element</th>
+                <th>Click Count</th>
+            </tr>
+        </thead>
+        <tbody id="analyticsTableBody">
+            <!-- Rows will be dynamically populated -->
+        </tbody>
+    </table>
+
+    <script>
+        // Object to store click counts
+        const analytics = {
+            links: {},
+            meshes: {}
+        };
+
+        // Function to update the analytics table
+        function updateAnalyticsTable() {
+            const tableBody = document.getElementById('analyticsTableBody');
+            tableBody.innerHTML = '';
+
+            // Add link data
+            Object.keys(analytics.links).forEach(link => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${link}</td><td>${analytics.links[link]}</td>`;
+                tableBody.appendChild(row);
+            });
+
+            // Add mesh data
+            Object.keys(analytics.meshes).forEach(mesh => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${mesh}</td><td>${analytics.meshes[mesh]}</td>`;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Function to reset analytics
+        function resetAnalytics() {
+            analytics.links = {};
+            analytics.meshes = {};
+            updateAnalyticsTable();
+        }
+
+        // Simulated click tracking setup
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simulate link tracking
+            const links = document.querySelectorAll('a');
+            links.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    const linkName = event.target.textContent || event.target.id;
+                    analytics.links[linkName] = (analytics.links[linkName] || 0) + 1;
+                    updateAnalyticsTable();
+                });
+            });
+
+            // Simulate mesh tracking
+            window.trackMeshClick = (meshName) => {
+                analytics.meshes[meshName] = (analytics.meshes[meshName] || 0) + 1;
+                updateAnalyticsTable();
+            };
+
+            // Initial table update
+            updateAnalyticsTable();
+        });
+    </script>
+</body>
+</html>
