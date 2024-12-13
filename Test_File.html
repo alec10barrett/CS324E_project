@@ -86,18 +86,16 @@
 </head>
 <body>
     <div class="top-right-links">
-        <a href="Features.html" target="_self">Features</a>
-        <a href="Experience.html" target="_self">Experience It</a>
-        <a href="BuyNow.html" target="_self">Buy Now</a>
+        <a href="Features.html" target="_blank" onclick="trackLinkClick('Features')">Features</a>
+        <a href="Experience.html" target="_blank" onclick="trackLinkClick('Experience It')">Experience It</a>
+        <a href="BuyNow.html" target="_blank" onclick="trackLinkClick('Buy Now')">Buy Now</a>
+        <a href="AnalyticsTrackingPage.html" target="_blank">Analytics</a>
     </div>
     <div class="top-left-links">
-        <a href="Leica.html" id="leicaButton">
+        <a href="Leica.html" target="_blank" id="leicaButton" onclick="trackLinkClick('Leica')">
             <b>Leica</b>
         </a>
     </div>
-    
-        
-
     <div id="infoBox"></div>
 
     <script src="three.js"></script>
@@ -115,25 +113,10 @@
         const radius = 1; 
         const rotationSpeed = 0.02;
         const keyState = {};
-        let analyticsWindow;
-
+        
         function trackLinkClick(linkName) {
-            // Reuse the analytics window if it's already open
-            if (!analyticsWindow || analyticsWindow.closed) {
-                analyticsWindow = window.open("AnalyticsTrackingPage.html", "_blank");
-            }
-
-            // Send the link click event to the analytics page
-            analyticsWindow.postMessage({ type: "linkClick", name: linkName }, "*");
-        }
-
-        // Function to track mesh clicks
-        function trackMeshClick(meshName) {
-            if (!analyticsWindow || analyticsWindow.closed) {
-                analyticsWindow = window.open("AnalyticsTrackingPage.html", "_blank");
-            }
-
-            analyticsWindow.postMessage({ type: "meshClick", name: meshName }, "*");
+            // Post a message to the current window
+            window.postMessage({ type: 'linkClick', name: linkName }, '*');
         }
 
         function init() {

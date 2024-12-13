@@ -1,134 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Tracker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/> 
+    <title>Analytics Tracking</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+            margin: 20px;
+            background: #f4f4f4;
         }
-
         h1 {
-            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
         }
-
         table {
-            width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            width: 300px;
         }
-
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-
         th, td {
-            padding: 10px;
+            border: 1px solid #333;
+            padding: 8px 12px;
             text-align: left;
         }
-
         th {
-            background-color: #f9f9f9;
-        }
-
-        #resetButton {
-            display: inline-block;
-            padding: 10px 15px;
-            font-size: 16px;
-            color: white;
-            background-color: #d9534f;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        #resetButton:hover {
-            background-color: #c9302c;
+            background: #333;
+            color: #fff;
         }
     </style>
 </head>
 <body>
     <h1>Link Click Analytics</h1>
+    <p>This page displays how many times each link was clicked:</p>
     <table>
-        <thead>
-            <tr>
-                <th>Link Name</th>
-                <th>Click Count</th>
-            </tr>
-        </thead>
-        <tbody id="analyticsTableBody">
-            <!-- Data will be dynamically populated -->
-        </tbody>
+        <tr>
+            <th>Link</th>
+            <th>Clicks</th>
+        </tr>
+        <tr>
+            <td>Leica</td>
+            <td id="leicaCount">0</td>
+        </tr>
+        <tr>
+            <td>Features</td>
+            <td id="featuresCount">0</td>
+        </tr>
+        <tr>
+            <td>Experience It</td>
+            <td id="experienceCount">0</td>
+        </tr>
+        <tr>
+            <td>Buy Now</td>
+            <td id="buyNowCount">0</td>
+        </tr>
     </table>
-    <button id="resetButton">Reset Analytics</button>
 
     <script>
-        // List of link names to track
-        const links = ["Features", "Experience It", "Buy Now", "Leica"];
+        let clickCounts = {
+            Leica: 0,
+            Features: 0,
+            "Experience It": 0,
+            "Buy Now": 0
+        };
 
-        // Initialize click counts in localStorage if not already present
-        function initializeAnalytics() {
-            if (!localStorage.getItem("linkClicks")) {
-                const initialCounts = links.reduce((acc, link) => {
-                    acc[link] = 0;
-                    return acc;
-                }, {});
-                localStorage.setItem("linkClicks", JSON.stringify(initialCounts));
-            }
+        function updateDisplay() {
+            document.getElementById('leicaCount').textContent = clickCounts.Leica;
+            document.getElementById('featuresCount').textContent = clickCounts.Features;
+            document.getElementById('experienceCount').textContent = clickCounts["Experience It"];
+            document.getElementById('buyNowCount').textContent = clickCounts["Buy Now"];
         }
 
-        // Get current analytics data from localStorage
-        function getAnalytics() {
-            return JSON.parse(localStorage.getItem("linkClicks"));
-        }
-
-        // Update the table with analytics data
-        function updateAnalyticsTable() {
-            const analytics = getAnalytics();
-            const tableBody = document.getElementById("analyticsTableBody");
-            tableBody.innerHTML = ""; // Clear existing rows
-
-            links.forEach(link => {
-                const row = document.createElement("tr");
-                const nameCell = document.createElement("td");
-                const countCell = document.createElement("td");
-
-                nameCell.textContent = link;
-                countCell.textContent = analytics[link] || 0;
-
-                row.appendChild(nameCell);
-                row.appendChild(countCell);
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Reset analytics data
-        document.getElementById("resetButton").addEventListener("click", () => {
-            const initialCounts = links.reduce((acc, link) => {
-                acc[link] = 0;
-                return acc;
-            }, {});
-            localStorage.setItem("linkClicks", JSON.stringify(initialCounts));
-            updateAnalyticsTable();
-        });
-
-        // Listen for messages from other pages
         window.addEventListener("message", (event) => {
-            if (event.data.type === "linkClick") {
-                const analytics = getAnalytics();
-                analytics[event.data.name] = (analytics[event.data.name] || 0) + 1;
-                localStorage.setItem("linkClicks", JSON.stringify(analytics));
-                updateAnalyticsTable();
-            }
-        });
+            // Check message validity
+            if (!event.data || !event.data.type) return;
 
-        // Initialize and populate the table on page load
-        initializeAnalytics();
-        updateAnalyticsTable();
+            if (event.data.type === "linkClick") {
+                const name = event.data.name;
+                if (clickCounts.hasOwnProperty(name)) {
+                    clickCounts[name]++;
+                    updateDisplay();
+                }
+            }
+        }, false);
+
+        // Initial update
+        updateDisplay();
     </script>
 </body>
 </html>
