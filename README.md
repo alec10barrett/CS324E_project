@@ -4,7 +4,8 @@ If you want to use the Github, it is https://github.com/alec10barrett/CS324E_pro
 
 1. Go to VSCODE and download the Live Server app/function in the Extensions tab
 2. Go to 'index.html' and left click and choose open with live server
-    This should take you to the beginning page
+
+   This should take you to the beginning page
 
 Use the WAD buttons to the arrow keys to move through the model in 3D
 
