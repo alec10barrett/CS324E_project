@@ -43,7 +43,7 @@
             background-color: #be1919;
             border-radius: 50%;
             font-size: 36pt; 
-            padding: 15px 15px; 
+            padding: 20px 25px; 
             border: none;
             transition: background-color 0.3s, color 0.3s;
             display: inline-block;
@@ -109,14 +109,15 @@
             </a>
         </div>
     <div class="top-right-links">
-        <a href="Features.html" target="_blank">Features</a>
-        <a href="Experience.html" target="_blank">Experience It</a>
-        <a href="BuyNow.html" target="_blank">Buy Now</a>
+        <!-- Removed direct hrefs that cause immediate navigation -->
+        <a href="#" onclick="handleLinkClick(event, 'Features.html', 'Features')">Features</a>
+        <a href="#" onclick="handleLinkClick(event, 'Experience.html', 'Experience It')">Experience It</a>
+        <a href="#" onclick="handleLinkClick(event, 'BuyNow.html', 'Buy Now')">Buy Now</a>
+        <!-- Clicking this will open the analytics window in a separate tab/window -->
+        <a href="#" onclick="openAnalyticsWindow()">Analytics Window</a>
     </div>
     <div class="top-left-links">
-        <a href="Leica.html" id="leicaButton">
-            <b>Leica</b>
-        </a>
+        <a href="#" onclick="handleLinkClick(event, 'Leica.html', 'Leica')"><b>Leica</b></a>
     </div>
 
     <div id="infoBox"></div>
@@ -136,6 +137,27 @@
         const radius = 1; 
         const rotationSpeed = 0.02;
         const keyState = {};
+        
+        let analyticsWindow;
+        function openAnalyticsWindow() {
+        analyticsWindow = window.open('AnalyticsTrackingPage.html', 'analyticsWindow');
+        }
+        function trackLinkClick(linkName) {
+            if (analyticsWindow && !analyticsWindow.closed) {
+                setTimeout(() => {
+                analyticsWindow.postMessage({ type: 'linkClick', name: linkName }, '*');
+                }, 50);
+            }
+        }
+        function handleLinkClick(event, url, linkName) {
+            event.preventDefault();
+            trackLinkClick(linkName);
+            // Wait a short time to ensure the message is sent before opening the link
+            setTimeout(() => {
+                window.open(url, '_blank');
+            }, 700);
+        }
+
 
         function init() {
             scene = new THREE.Scene();
@@ -222,8 +244,13 @@
 
 
         let isMeshMoved = false; // Flag to track if the mesh has already moved
+        const clickSound = new Audio('sounds/mouse-click-117076.mp3');
 
+
+        
         function onMouseClick(event) {
+            clickSound.currentTime = 0; // Reset to the beginning of the sound
+            clickSound.play();
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
@@ -235,6 +262,7 @@
 
             if (intersects.length > 0) {
                 const clickedPart = intersects[0].object;
+                
 
                 if (selectedPart === clickedPart) {
                     resetSelectedPart();
@@ -249,6 +277,7 @@
                 if (selectedPart && selectedPart !== clickedPart) {
                     resetSelectedPart();
                 }
+                
 
                 const maxMoveDistance = 0.5;
                 const distanceFromCenter = clickedPart.position.distanceTo(new THREE.Vector3(0, 0, 0));

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/> 
+    <title>Analytics Tracking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f4f4f4;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 300px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Link Click Analytics</h1>
+    <p>This page displays how many times each link was clicked:</p>
+    <table>
+        <tr>
+            <th>Link</th>
+            <th>Clicks</th>
+        </tr>
+        <tr>
+            <td>Leica</td>
+            <td id="leicaCount">0</td>
+        </tr>
+        <tr>
+            <td>Features</td>
+            <td id="featuresCount">0</td>
+        </tr>
+        <tr>
+            <td>Experience It</td>
+            <td id="experienceCount">0</td>
+        </tr>
+        <tr>
+            <td>Buy Now</td>
+            <td id="buyNowCount">0</td>
+        </tr>
+    </table>
+
+    <script>
+        let clickCounts = {
+            Leica: 0,
+            Features: 0,
+            "Experience It": 0,
+            "Buy Now": 0
+        };
+
+        function updateDisplay() {
+            document.getElementById('leicaCount').textContent = clickCounts.Leica;
+            document.getElementById('featuresCount').textContent = clickCounts.Features;
+            document.getElementById('experienceCount').textContent = clickCounts["Experience It"];
+            document.getElementById('buyNowCount').textContent = clickCounts["Buy Now"];
+        }
+
+        window.addEventListener("message", (event) => {
+            // Check message validity
+            if (!event.data || !event.data.type) return;
+
+            if (event.data.type === "linkClick") {
+                const name = event.data.name;
+                if (clickCounts.hasOwnProperty(name)) {
+                    clickCounts[name]++;
+                    updateDisplay();
+                }
+            }
+        }, false);
+
+        // Initial update
+        updateDisplay();
+    </script>
+</body>
+</html>
